@@ -488,7 +488,7 @@
             </div>
 
             <div class="form-group full-width">
-              <label>Level Kognitif (Tidak ditampilkan di PDF):</label>
+              <label>Level Kognitif:</label>
               <div class="checkbox-group">
                 <div class="checkbox-item">
                   <input type="checkbox" id="currentMemahami" name="currentLevelKognitif" value="Memahami" />
@@ -561,6 +561,7 @@
       </div>
     </div>
 
+    <!-- Modal Pembuat Tabel -->
     <div id="tableModal" class="modal-backdrop">
       <div class="modal-content">
         <h3>Pembuat Tabel</h3>
@@ -651,8 +652,7 @@
           gridContainer.appendChild(cell);
         }
       }
-      
-      // [PERBAIKAN] Fungsi disederhanakan untuk menghasilkan kode yang lebih bersih
+
       function insertTableFromModal() {
         const gridContainer = document.getElementById("tableGrid");
         const rows = parseInt(document.getElementById("tableRows").value) || 2;
@@ -660,19 +660,19 @@
         const cells = gridContainer.querySelectorAll("textarea");
 
         if (cells.length === 0) {
-            alert("Silakan buat grid terlebih dahulu.");
-            return;
+          alert("Silakan buat grid terlebih dahulu.");
+          return;
         }
 
         let tableString = "[tabel]\n";
         for (let r = 0; r < rows; r++) {
-            tableString += "  [baris]\n";
-            for (let c = 0; c < cols; c++) {
-                const cellIndex = r * cols + c;
-                const cellValue = cells[cellIndex] ? cells[cellIndex].value : "";
-                tableString += `    [kolom]${cellValue}[/kolom]\n`;
-            }
-            tableString += "  [/baris]\n";
+          tableString += "  [baris]\n";
+          for (let c = 0; c < cols; c++) {
+            const cellIndex = r * cols + c;
+            const cellValue = cells[cellIndex] ? cells[cellIndex].value : "";
+            tableString += `    [kolom]${cellValue}[/kolom]\n`;
+          }
+          tableString += "  [/baris]\n";
         }
         tableString += "[/tabel]";
 
@@ -859,62 +859,62 @@
         previewContent.innerHTML = generateMultiPreviewHTML();
         previewContainer.style.display = "block";
         previewContainer.scrollIntoView({
-          behavior: "smooth"
+          behavior: "smooth",
         });
       }
-      
-      // [PERBAIKAN] Fungsi ini diubah untuk mencari [tag] bukan $tag$
+
       function parseBBCodeToHTML(text) {
         if (!text) return "";
         let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        
+
         // Tabel
         html = html.replace(/\[tabel\]([\s\S]*?)\[\/tabel\]/g, (match, content) => {
-            let tableContent = content.replace(/\[baris\]([\s\S]*?)\[\/baris\]/g, (rowMatch, rowContent) => {
-                let row = rowContent.replace(/\[kolom\]([\s\S]*?)\[\/kolom\]/g, "<td>$1</td>");
-                return `<tr>${row.trim()}</tr>`;
-            });
-            return `<table class="soal-cell-table">${tableContent.trim()}</table>`;
+          let tableContent = content.replace(/\[baris\]([\s\S]*?)\[\/baris\]/g, (rowMatch, rowContent) => {
+            let row = rowContent.replace(/\[kolom\]([\s\S]*?)\[\/kolom\]/g, "<td>$1</td>");
+            return `<tr>${row.trim()}</tr>`;
+          });
+          return `<table class="soal-cell-table">${tableContent.trim()}</table>`;
         });
-        
+
         // Perataan
         html = html.replace(/\[rata=(kiri|tengah|kanan)\]([\s\S]*?)\[\/rata\]/g, (match, alignment, content) => {
-            const alignValue = alignment === "tengah" ? "center" : alignment;
-            return `<div style="text-align: ${alignValue};">${content.trim()}</div>`;
+          const alignValue = alignment === "tengah" ? "center" : alignment;
+          return `<div style="text-align: ${alignValue};">${content.trim()}</div>`;
         });
-        
+
         // Daftar (list)
         html = html.replace(/\[(nomor|poin)\]([\s\S]*?)\[\/\1\]/g, (match, listType, content) => {
-            const tag = listType === "nomor" ? "ol" : "ul";
-            const items = content
-                .split("[*]")
-                .filter((item) => item.trim() !== "")
-                .map((item) => `<li>${item.trim()}</li>`)
-                .join("");
-            return `<${tag} style="margin-left: 20px; margin-top: 10px; white-space: normal; text-align: left;">${items}</${tag}>`;
+          const tag = listType === "nomor" ? "ol" : "ul";
+          const items = content
+            .split("[*]")
+            .filter((item) => item.trim() !== "")
+            .map((item) => `<li>${item.trim()}</li>`)
+            .join("");
+          return `<${tag} style="margin-left: 20px; margin-top: 10px; white-space: normal; text-align: left;">${items}</${tag}>`;
         });
-        
+
         // Gambar
         html = html.replace(/\[gambar(?: lebar=([0-9]{1,3}%|[0-9]{1,4}px))?\](.*?)\[\/gambar\]/g, (match, width, url) => {
-            const style = width ? `style="width: ${width}; max-width: 100%;"` : 'style="max-width: 100%;"';
-            const sanitizedUrl = url.trim().replace(/"/g, "&quot;");
-            return `<img src="${sanitizedUrl}" alt="Gambar Soal" ${style}>`;
+          const style = width ? `style="width: ${width}; max-width: 100%;"` : 'style="max-width: 100%;"';
+          const sanitizedUrl = url.trim().replace(/"/g, "&quot;");
+          return `<img src="${sanitizedUrl}" alt="Gambar Soal" ${style}>`;
         });
-        
+
         // Format Teks Dasar
         html = html.replace(/\[b\]([\s\S]*?)\[\/b\]/g, "<b>$1</b>");
         html = html.replace(/\[i\]([\s\S]*?)\[\/i\]/g, "<i>$1</i>");
         html = html.replace(/\[u\]([\s\S]*?)\[\/u\]/g, "<u>$1</u>");
-        
+
         return html.replace(/\n/g, "<br>");
       }
 
-      // Fungsi ini membuat HTML untuk SATU kartu soal
+      // [PERBAIKAN] Menambahkan baris untuk Level Kognitif
       function generateSingleCardHTML(soal, commonData, includeHeader) {
         const parsedSoal = parseBBCodeToHTML(soal.tekstSoal);
+        const levelKognitifText = soal.levelKognitif && soal.levelKognitif.length > 0 ? soal.levelKognitif.join(", ") : "";
 
-        let mainTitleHeader = '';
-        let headerRows = '';
+        let mainTitleHeader = "";
+        let headerRows = "";
 
         if (includeHeader) {
           mainTitleHeader = `
@@ -952,12 +952,16 @@
                  <tbody>
                      ${headerRows}
                      <tr>
-                         <td style="width: 20%;">Capaian Pembelajaran</td>
+                         <td>Capaian Pembelajaran</td>
                          <td colspan="3">${soal.capaianPembelajaran || ""}</td>
                      </tr>
                      <tr>
                          <td>Buku Acuan/Referensi</td>
                          <td colspan="3">${soal.bukuAcuan || ""}</td>
+                     </tr>
+                      <tr>
+                         <td>Level Kognitif</td>
+                         <td colspan="3">${levelKognitifText}</td>
                      </tr>
                      <tr>
                          <td>Indikator Pencapaian Kompetensi</td>
@@ -982,8 +986,6 @@
            </div>`;
       }
 
-
-      // Fungsi ini digunakan untuk menampilkan preview di browser
       function generateMultiPreviewHTML() {
         const commonData = {
           kelas: document.getElementById("multiKelas").value,
@@ -994,109 +996,131 @@
         };
 
         const styles = `
-       <style>
-         .kartu-soal-item { font-family: 'Arial', sans-serif; font-size: 11pt; line-height: 1.4; page-break-inside: avoid; margin-bottom: 20px; border: 2px solid black; padding: 10px; }
-         .preview-header { text-align: center; margin-bottom: 5px; font-weight: bold; }
-         .preview-title { font-size: 14pt; }
-         .preview-subtitle { font-size: 12pt; }
-         .header-line { border-bottom: 2px solid black; margin-bottom: 10px; }
-         .preview-table { width: 100%; border-collapse: collapse; border: none; }
-         .preview-table td { border: 1px solid black; padding: 5px 8px; vertical-align: top; }
-         .soal-cell { white-space: pre-wrap; word-wrap: break-word; }
-         .soal-cell img { max-width: 100%; height: auto; display: block; }
-         .soal-cell table, .soal-cell-table { width: 100%; border-collapse: collapse; margin: 5px 0; }
-         .soal-cell table td, .soal-cell-table td { border: 1px solid #333; padding: 5px; }
-       </style>
-     `;
+          <style>
+            .kartu-soal-item { font-family: 'Arial', sans-serif; font-size: 11pt; line-height: 1.4; page-break-inside: avoid; margin-bottom: 20px; border: 2px solid black; padding: 10px; }
+            .preview-header { text-align: center; margin-bottom: 5px; font-weight: bold; }
+            .preview-title { font-size: 14pt; }
+            .preview-subtitle { font-size: 12pt; }
+            .header-line { border-bottom: 2px solid black; margin-bottom: 10px; }
+            .preview-table { width: 100%; border-collapse: collapse; border: none; }
+            .preview-table td { border: 1px solid black; padding: 5px 8px; vertical-align: top; }
+            .soal-cell { white-space: pre-wrap; word-wrap: break-word; }
+            .soal-cell img { max-width: 100%; height: auto; display: block; }
+            .soal-cell table, .soal-cell-table { width: 100%; border-collapse: collapse; margin: 5px 0; }
+            .soal-cell table td, .soal-cell-table td { border: 1px solid #333; padding: 5px; }
+          </style>
+        `;
 
         let allCardsHTML = '<div class="multi-preview">';
-        multiSoalData.forEach((soal) => {
-          allCardsHTML += generateSingleCardHTML(soal, commonData, true);
+        multiSoalData.forEach((soal, index) => {
+          // Argumen ketiga (true/false) menentukan apakah "Data Umum" akan ditampilkan
+          allCardsHTML += generateSingleCardHTML(soal, commonData, index === 0);
         });
         allCardsHTML += "</div>";
         return styles + allCardsHTML;
       }
-      
-      // [PERBAIKAN] Kode PDF disederhanakan dan diperbaiki
-      // Fungsi Export PDF yang stabil: render tiap kartu soal ke gambar lalu ke PDF
+
+      // Helper function untuk memuat gambar dan mengembalikannya sebagai Promise
+      function loadImage(url) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = "Anonymous"; // Mengatasi masalah CORS jika ada
+          img.onload = () => resolve(img);
+          img.onerror = () => reject(new Error(`Gagal memuat gambar dari ${url}`));
+          img.src = url;
+        });
+      }
+
+      // [PERBAIKAN] Fungsi Ekspor PDF yang lebih andal
       async function exportToPDF() {
-         saveCurrentSoal();
-         showPreview(); // Pastikan preview sudah tampil
+        saveCurrentSoal();
+        showPreview(); // Tampilkan preview agar elemen HTML-nya bisa di-render
 
-         const exportButton = document.querySelector(".btn-export");
-         exportButton.innerHTML = "🔄 Membuat PDF...";
-         exportButton.disabled = true;
+        const exportButton = document.querySelector(".btn-export");
+        exportButton.innerHTML = "🔄 Membuat PDF...";
+        exportButton.disabled = true;
 
-         try {
-           const { jsPDF } = window.jspdf;
-           const pdf = new jsPDF("p", "mm", "a4");
+        try {
+          const { jsPDF } = window.jspdf;
+          const pdf = new jsPDF("p", "mm", "a4");
 
-           // Tunggu layout preview muncul
-           await new Promise(resolve => setTimeout(resolve, 500));
+          // Beri jeda singkat agar DOM sempat diperbarui
+          await new Promise((resolve) => setTimeout(resolve, 100));
 
-           // Ambil list kartu soal dari preview
-           const previewContainer = document.querySelector("#previewContainer");
-           const cards = Array.from(previewContainer.querySelectorAll(".kartu-soal-item"));
+          const cards = Array.from(document.querySelectorAll("#previewContent .kartu-soal-item"));
+          if (cards.length === 0) {
+            alert("Tidak ada kartu soal untuk diekspor.");
+            return;
+          }
 
-           if (cards.length === 0) {
-             alert("Tidak ada kartu soal yang bisa diekspor.");
-             exportButton.innerHTML = "📄 Export PDF";
-             exportButton.disabled = false;
-             return;
-           }
+          let kopImage = null;
+          try {
+            // Pra-muat gambar kop surat
+            kopImage = await loadImage("kop.png");
+          } catch (error) {
+            console.warn("Peringatan: file kop.png tidak ditemukan atau gagal dimuat. Kop surat akan dilewati.", error.message);
+          }
 
-           for (let i = 0; i < cards.length; i++) {
-             // Render kartu soal ke canvas
-             const canvas = await html2canvas(cards[i], {
-               scale: 2, // Meningkatkan kualitas gambar
-               useCORS: true,
-               backgroundColor: "#ffffff"
-             });
+          const pageWidth = pdf.internal.pageSize.getWidth();
+          const pageHeight = pdf.internal.pageSize.getHeight();
+          const margin = 10;
 
-             const imgData = canvas.toDataURL("image/png");
-             const pageWidth = pdf.internal.pageSize.getWidth();
-             const pageHeight = pdf.internal.pageSize.getHeight();
+          for (let i = 0; i < cards.length; i++) {
+            const cardElement = cards[i];
 
-             // Hitung proporsi agar muat di halaman dengan margin 10mm
-             const margin = 10;
-             const availableWidth = pageWidth - margin * 2;
-             const availableHeight = pageHeight - margin * 2;
-             
-             const imgProps = pdf.getImageProperties(imgData);
-             let imgWidth = availableWidth;
-             let imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+            if (i > 0) {
+              pdf.addPage();
+            }
 
-             if (imgHeight > availableHeight) {
-               imgHeight = availableHeight;
-               imgWidth = (imgProps.width * imgHeight) / imgProps.height;
-             }
-             
-             // Tambahkan gambar ke PDF di tengah halaman
-             const x = (pageWidth - imgWidth) / 2;
-             const y = margin;
-             
-             pdf.addImage(imgData, "PNG", x, y, imgWidth, imgHeight);
+            let currentY = margin;
 
-             // Tambah halaman baru jika bukan kartu terakhir
-             if (i < cards.length - 1) {
-               pdf.addPage();
-             }
-           }
+            // --- Tambahkan KOP hanya di halaman pertama jika berhasil dimuat ---
+            if (i === 0 && kopImage) {
+              const imageWidth = pageWidth - margin * 2;
+              // [PERBAIKAN] Hitung tinggi gambar berdasarkan rasio aspek aslinya untuk menghindari distorsi
+              const imageHeight = (kopImage.naturalHeight / kopImage.naturalWidth) * imageWidth;
 
-           // Nama file otomatis
-           const mataPelajaran = document.getElementById("multiMataPelajaran").value || "Kartu-Soal";
-           const kelas = document.getElementById("multiKelas").value || "";
-           let fileName = `${mataPelajaran}-${kelas}-KartuSoal.pdf`.replace(/[/\\?%*:|"<>]/g, "-");
-           pdf.save(fileName);
+              // Langsung tambahkan gambar yang sudah dimuat ke PDF
+              pdf.addImage(kopImage, "PNG", margin, currentY, imageWidth, imageHeight);
+              currentY += imageHeight + 5; // Geser posisi Y ke bawah setelah kop + beri spasi 5mm
+            }
 
-         } catch (error) {
-           alert("Gagal membuat PDF. Silakan periksa konsol untuk detail.");
-           console.error(error);
-         } finally {
-           exportButton.innerHTML = "📄 Export PDF";
-           exportButton.disabled = false;
-         }
-       }
+            // Render kartu soal ke canvas
+            const canvas = await html2canvas(cardElement, {
+              scale: 2,
+              useCORS: true,
+              backgroundColor: "#fff",
+            });
+
+            const imgData = canvas.toDataURL("image/png");
+            const imgProps = pdf.getImageProperties(imgData);
+
+            const availableWidth = pageWidth - margin * 2;
+            let imgWidth = availableWidth;
+            let imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+            const availableHeight = pageHeight - currentY - margin;
+            if (imgHeight > availableHeight) {
+              imgHeight = availableHeight; // Kecilkan kartu jika terlalu tinggi
+            }
+
+            const xPosition = margin;
+            pdf.addImage(imgData, "PNG", xPosition, currentY, imgWidth, imgHeight);
+          }
+
+          // Nama file otomatis
+          const mataPelajaran = document.getElementById("multiMataPelajaran").value || "Kartu-Soal";
+          const kelas = document.getElementById("multiKelas").value || "";
+          let fileName = `${mataPelajaran}-${kelas}-KartuSoal.pdf`.replace(/[/\\?%*:|"<>]/g, "-");
+          pdf.save(fileName);
+        } catch (error) {
+          alert("Gagal membuat PDF. Pastikan file 'kop.png' ada di folder yang sama dan periksa konsol untuk detail.");
+          console.error("Error exporting to PDF:", error);
+        } finally {
+          exportButton.innerHTML = "📄 Export PDF";
+          exportButton.disabled = false;
+        }
+      }
 
       function clearForm() {
         if (confirm("Apakah Anda yakin ingin menghapus semua data? Data yang tersimpan juga akan terhapus permanen.")) {
@@ -1144,7 +1168,7 @@
         }
       }
 
-      document.addEventListener("DOMContentLoaded", function() {
+      document.addEventListener("DOMContentLoaded", function () {
         loadAllDataFromLocalStorage();
         let saveTimeout;
         document.querySelector(".form-container").addEventListener("input", () => {
