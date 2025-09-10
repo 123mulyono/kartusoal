@@ -41,14 +41,30 @@
         font-weight: bold;
       }
 
-      .header h2 {
+      /* Style untuk input di header */
+      .header-input {
+        background: transparent;
+        border: none;
+        color: white;
+        text-align: center;
+        width: 80%;
+        font-family: inherit;
+        padding: 5px;
+        border-radius: 5px;
+      }
+      .header-input.h2-style {
         font-size: 18px;
         margin-bottom: 5px;
+        font-weight: 500;
       }
-
-      .header h3 {
+      .header-input.h3-style {
         font-size: 16px;
         font-weight: normal;
+      }
+      .header-input:focus {
+        outline: none;
+        background: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
       }
 
       .form-container {
@@ -412,8 +428,8 @@
     <div class="container">
       <div class="header">
         <h1>KARTU SOAL</h1>
-        <h2>ASESMEN SUMATIF TENGAH SEMESTER I</h2>
-        <h3>TAHUN PELAJARAN 2025/2026</h3>
+        <input type="text" id="headerTitle1" class="header-input h2-style" value="ASESMEN SUMATIF TENGAH SEMESTER I" />
+        <input type="text" id="headerTitle2" class="header-input h3-style" value="TAHUN PELAJARAN 2025/2026" />
       </div>
 
       <div class="form-container">
@@ -536,7 +552,7 @@
                   <button type="button" class="format-btn underline" onclick="wrapText(document.getElementById('currentTekstSoal'), '[u]', '[/u]')">U</button>
                   <button type="button" class="format-btn" onclick="wrapText(document.getElementById('currentTekstSoal'), '[nomor]\\n[*]', '\\n[/nomor]')">1. List</button>
                   <button type="button" class="format-btn" onclick="wrapText(document.getElementById('currentTekstSoal'), '[poin]\\n[*]', '\\n[/poin]')">• List</button>
-                  <button type="button" class="format-btn" onclick="insertImageTag(document.getElementById('currentTekstSoal'))">🖼️ Gambar</button>
+                  <button type="button" class="format-btn" onclick="triggerImageUpload()">🖼️ Unggah Gambar</button>
                   <button type="button" class="format-btn" onclick="openTableModal('currentTekstSoal')">📊 Tabel</button>
                   <button type="button" class="format-btn" onclick="alignText(document.getElementById('currentTekstSoal'), 'kiri')">⬅️ Kiri</button>
                   <button type="button" class="format-btn" onclick="alignText(document.getElementById('currentTekstSoal'), 'tengah')">↔️ Tengah</button>
@@ -546,6 +562,43 @@
               </div>
             </div>
           </div>
+          
+          <div id="signature-section">
+            <div class="section-divider" style="background: linear-gradient(45deg, #ffc371, #ff5f6d);">✒️ DATA TANDA TANGAN</div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="signatureKotaTanggal">Kota & Tanggal:</label>
+                <input type="text" id="signatureKotaTanggal" placeholder="Sidoarjo, 10 September 2025" />
+              </div>
+              <div class="form-group">
+                <label for="signatureKepsekName">Nama Kepala Sekolah:</label>
+                <input type="text" id="signatureKepsekName" placeholder="Nama Lengkap Kepala Sekolah" />
+              </div>
+               <div class="form-group">
+                <label for="signaturePenyusunName">Nama Penyusun:</label>
+                <input type="text" id="signaturePenyusunName" placeholder="Nama Penyusun (Otomatis)" readonly />
+              </div>
+              <div class="form-group">
+                <label for="signatureKepsekNip">NIP Kepala Sekolah:</label>
+                <input type="text" id="signatureKepsekNip" placeholder="NIP/NIK Kepala Sekolah" />
+              </div>
+              <div class="form-group">
+                <label for="signaturePenyusunNip">NIP Penyusun:</label>
+                <input type="text" id="signaturePenyusunNip" placeholder="NIP/NIK Penyusun" />
+              </div>
+               <div class="form-group">
+                <label>Tanda Tangan Kepala Sekolah:</label>
+                <button type="button" class="nav-btn add" style="width: fit-content;" onclick="triggerSignatureUpload('kepsek')">Unggah TTD</button>
+                <img id="kepsekSignaturePreview" src="" alt="Preview TTD Kepsek" style="max-width: 150px; height: auto; margin-top: 10px; border: 1px solid #ddd; padding: 5px; border-radius: 5px;"/>
+              </div>
+              <div class="form-group">
+                <label>Tanda Tangan Penyusun:</label>
+                <button type="button" class="nav-btn add" style="width: fit-content;" onclick="triggerSignatureUpload('penyusun')">Unggah TTD</button>
+                <img id="penyusunSignaturePreview" src="" alt="Preview TTD Penyusun" style="max-width: 150px; height: auto; margin-top: 10px; border: 1px solid #ddd; padding: 5px; border-radius: 5px;"/>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         <div class="buttons">
@@ -560,6 +613,10 @@
         </div>
       </div>
     </div>
+    
+    <input type="file" id="imageUploader" accept="image/*" style="display: none;" />
+    <input type="file" id="signatureUploader" accept="image/png, image/jpeg" style="display: none;" />
+
 
     <!-- Modal Pembuat Tabel -->
     <div id="tableModal" class="modal-backdrop">
@@ -585,6 +642,7 @@
       let currentSoalIndex = 0;
       let multiSoalData = [];
       let activeTextareaIdForTable = "";
+      let currentSignatureUploadTarget = '';
 
       // --- Fungsi Toolbar --- //
       function wrapText(textarea, openTag, closeTag) {
@@ -597,19 +655,59 @@
         textarea.selectionEnd = start + replacement.length;
         saveAllDataToLocalStorage();
       }
-
-      function insertImageTag(textarea) {
-        const url = prompt("Masukkan URL lengkap gambar:", "https://");
-        if (url) {
-          const width = prompt("Masukkan lebar gambar (contoh: 50% atau 200px). Biarkan kosong untuk lebar otomatis.", "100%");
-          let tag = `[gambar${width ? ` lebar=${width}` : ""}]${url}[/gambar]`;
-          const start = textarea.selectionStart;
-          textarea.value = textarea.value.substring(0, start) + tag + textarea.value.substring(textarea.selectionEnd);
-          textarea.focus();
-          textarea.selectionEnd = start + tag.length;
-          saveAllDataToLocalStorage();
-        }
+      
+      function triggerImageUpload() {
+          document.getElementById('imageUploader').click();
       }
+      
+      function handleImageUpload(event) {
+          const file = event.target.files[0];
+          if (!file || !file.type.startsWith('image/')) {
+              return; 
+          }
+
+          const reader = new FileReader();
+          reader.onload = function(e) {
+              const dataUrl = e.target.result;
+              const width = prompt("Masukkan lebar gambar (contoh: 50% atau 200px). Biarkan kosong untuk lebar otomatis.", "100%");
+              let tag = `[gambar${width ? ` lebar=${width}` : ""}]${dataUrl}[/gambar]`;
+              
+              const textarea = document.getElementById('currentTekstSoal');
+              const start = textarea.selectionStart;
+              textarea.value = textarea.value.substring(0, start) + tag + textarea.value.substring(textarea.selectionEnd);
+              textarea.focus();
+              textarea.selectionEnd = start + tag.length;
+              saveAllDataToLocalStorage();
+          };
+          
+          reader.readAsDataURL(file);
+          
+          event.target.value = ''; 
+      }
+
+      function triggerSignatureUpload(target) {
+          currentSignatureUploadTarget = target;
+          document.getElementById('signatureUploader').click();
+      }
+
+      function handleSignatureUpload(event) {
+          const file = event.target.files[0];
+          if (!file) return;
+
+          const reader = new FileReader();
+          reader.onload = function(e) {
+              const dataUrl = e.target.result;
+              if (currentSignatureUploadTarget === 'kepsek') {
+                  document.getElementById('kepsekSignaturePreview').src = dataUrl;
+              } else if (currentSignatureUploadTarget === 'penyusun') {
+                  document.getElementById('penyusunSignaturePreview').src = dataUrl;
+              }
+              saveAllDataToLocalStorage(); // Simpan data setelah gambar di-load
+          };
+          reader.readAsDataURL(file);
+          event.target.value = '';
+      }
+
 
       function alignText(textarea, alignment) {
         const start = textarea.selectionStart;
@@ -620,7 +718,6 @@
           lineEnd = value.length;
         }
         const selectedLine = value.substring(lineStart, lineEnd);
-        // Membersihkan tag perataan yang sudah ada sebelumnya
         const cleanedLine = selectedLine.replace(/\[rata=(kiri|tengah|kanan)\]([\s\S]*?)\[\/rata\]/g, "$2");
         const replacement = `[rata=${alignment}]${cleanedLine}[/rata]`;
         textarea.value = value.substring(0, lineStart) + replacement + value.substring(lineEnd);
@@ -859,7 +956,7 @@
         previewContent.innerHTML = generateMultiPreviewHTML();
         previewContainer.style.display = "block";
         previewContainer.scrollIntoView({
-          behavior: "smooth",
+          behavior: "smooth"
         });
       }
 
@@ -876,10 +973,28 @@
           return `<table class="soal-cell-table">${tableContent.trim()}</table>`;
         });
 
-        // Perataan
         html = html.replace(/\[rata=(kiri|tengah|kanan)\]([\s\S]*?)\[\/rata\]/g, (match, alignment, content) => {
-          const alignValue = alignment === "tengah" ? "center" : alignment;
-          return `<div style="text-align: ${alignValue};">${content.trim()}</div>`;
+            const trimmedContent = content.trim();
+            const isImageOnly = /^\[gambar(?:.*?)\][\s\S]*?\[\/gambar\]$/.test(trimmedContent);
+
+            if (isImageOnly) {
+                let justifyContent;
+                switch (alignment) {
+                    case 'tengah':
+                        justifyContent = 'center';
+                        break;
+                    case 'kanan':
+                        justifyContent = 'flex-end';
+                        break;
+                    default:
+                        justifyContent = 'flex-start';
+                        break;
+                }
+                return `<div style="display: flex; justify-content: ${justifyContent};">${trimmedContent}</div>`;
+            } else {
+                const alignValue = alignment === "tengah" ? "center" : alignment;
+                return `<div style="text-align: ${alignValue};">${trimmedContent}</div>`;
+            }
         });
 
         // Daftar (list)
@@ -908,24 +1023,25 @@
         return html.replace(/\n/g, "<br>");
       }
 
-      // [PERBAIKAN] Menambahkan baris untuk Level Kognitif
       function generateSingleCardHTML(soal, commonData, includeHeader) {
         const parsedSoal = parseBBCodeToHTML(soal.tekstSoal);
-        const levelKognitifText = soal.levelKognitif && soal.levelKognitif.length > 0 ? soal.levelKognitif.join(", ") : "";
+        const levelKognitifText = (soal.levelKognitif && soal.levelKognitif.length > 0) ? soal.levelKognitif.join(', ') : "";
 
-        let mainTitleHeader = "";
-        let headerRows = "";
+        let mainTitleHeader = '';
+        let headerRows = '';
 
         if (includeHeader) {
-          mainTitleHeader = `
+           const headerTitle1 = document.getElementById('headerTitle1').value;
+           const headerTitle2 = document.getElementById('headerTitle2').value;
+           mainTitleHeader = `
              <div class="preview-header">
                  <div class="preview-title">KARTU SOAL</div>
-                 <div class="preview-subtitle">ASESMEN SUMATIF TENGAH SEMESTER I</div>
-                 <div class="preview-subtitle">TAHUN PELAJARAN 2025/2026</div>
+                 <div class="preview-subtitle">${headerTitle1}</div>
+                 <div class="preview-subtitle">${headerTitle2}</div>
              </div>
              <div class="header-line"></div>
            `;
-          headerRows = `
+           headerRows = `
                <tr>
                    <td style="width: 20%;">Kelas/Term/Semester</td>
                    <td style="width: 30%;">: ${commonData.kelas || ""}</td>
@@ -946,7 +1062,7 @@
         }
 
         return `
-           <div class="kartu-soal-item">
+           <div class="kartu-soal-item" data-has-header="${includeHeader}">
              ${mainTitleHeader}
              <table class="preview-table">
                  <tbody>
@@ -1013,83 +1129,100 @@
 
         let allCardsHTML = '<div class="multi-preview">';
         multiSoalData.forEach((soal, index) => {
-          // Argumen ketiga (true/false) menentukan apakah "Data Umum" akan ditampilkan
           allCardsHTML += generateSingleCardHTML(soal, commonData, index === 0);
         });
         allCardsHTML += "</div>";
         return styles + allCardsHTML;
       }
 
-      // Helper function untuk memuat gambar dan mengembalikannya sebagai Promise
       function loadImage(url) {
         return new Promise((resolve, reject) => {
           const img = new Image();
-          img.crossOrigin = "Anonymous"; // Mengatasi masalah CORS jika ada
+          img.crossOrigin = 'Anonymous'; 
           img.onload = () => resolve(img);
           img.onerror = () => reject(new Error(`Gagal memuat gambar dari ${url}`));
           img.src = url;
         });
       }
 
-      // [PERBAIKAN] Fungsi Ekspor PDF yang lebih andal
       async function exportToPDF() {
         saveCurrentSoal();
-        showPreview(); // Tampilkan preview agar elemen HTML-nya bisa di-render
+        showPreview(); 
 
         const exportButton = document.querySelector(".btn-export");
         exportButton.innerHTML = "🔄 Membuat PDF...";
         exportButton.disabled = true;
 
         try {
-          const { jsPDF } = window.jspdf;
+          const {
+            jsPDF
+          } = window.jspdf;
           const pdf = new jsPDF("p", "mm", "a4");
 
-          // Beri jeda singkat agar DOM sempat diperbarui
-          await new Promise((resolve) => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 100));
 
           const cards = Array.from(document.querySelectorAll("#previewContent .kartu-soal-item"));
           if (cards.length === 0) {
             alert("Tidak ada kartu soal untuk diekspor.");
+            exportButton.disabled = false;
             return;
           }
 
           let kopImage = null;
           try {
-            // Pra-muat gambar kop surat
-            kopImage = await loadImage("kop.png");
+            kopImage = await loadImage('kop.png');
           } catch (error) {
-            console.warn("Peringatan: file kop.png tidak ditemukan atau gagal dimuat. Kop surat akan dilewati.", error.message);
+            console.warn("Peringatan: file kop.png tidak ditemukan. Kop surat akan dilewati.");
+          }
+
+          let kepsekSigImage = null;
+          const kepsekSigDataUrl = document.getElementById('kepsekSignaturePreview').src;
+          if (kepsekSigDataUrl && kepsekSigDataUrl.startsWith('data:image')) {
+              try {
+                  kepsekSigImage = await loadImage(kepsekSigDataUrl);
+              } catch (e) { console.warn('Gagal memuat gambar TTD Kepsek dari Data URL'); }
+          }
+          
+          let penyusunSigImage = null;
+          const penyusunSigDataUrl = document.getElementById('penyusunSignaturePreview').src;
+          if (penyusunSigDataUrl && penyusunSigDataUrl.startsWith('data:image')) {
+              try {
+                  penyusunSigImage = await loadImage(penyusunSigDataUrl);
+              } catch (e) { console.warn('Gagal memuat gambar TTD Penyusun dari Data URL'); }
           }
 
           const pageWidth = pdf.internal.pageSize.getWidth();
           const pageHeight = pdf.internal.pageSize.getHeight();
           const margin = 10;
+          let lastCardBottomY = 0;
 
           for (let i = 0; i < cards.length; i++) {
             const cardElement = cards[i];
+            let currentY = margin;
 
             if (i > 0) {
               pdf.addPage();
+              lastCardBottomY = 0; 
             }
-
-            let currentY = margin;
-
-            // --- Tambahkan KOP hanya di halaman pertama jika berhasil dimuat ---
+            
             if (i === 0 && kopImage) {
-              const imageWidth = pageWidth - margin * 2;
-              // [PERBAIKAN] Hitung tinggi gambar berdasarkan rasio aspek aslinya untuk menghindari distorsi
-              const imageHeight = (kopImage.naturalHeight / kopImage.naturalWidth) * imageWidth;
-
-              // Langsung tambahkan gambar yang sudah dimuat ke PDF
-              pdf.addImage(kopImage, "PNG", margin, currentY, imageWidth, imageHeight);
-              currentY += imageHeight + 5; // Geser posisi Y ke bawah setelah kop + beri spasi 5mm
+                const imageWidth = pageWidth - margin * 2;
+                const imageHeight = (kopImage.naturalHeight / kopImage.naturalWidth) * imageWidth;
+                pdf.addImage(kopImage, 'PNG', margin, currentY, imageWidth, imageHeight);
+                currentY += imageHeight + 4;
             }
 
-            // Render kartu soal ke canvas
-            const canvas = await html2canvas(cardElement, {
+            // [PERBAIKAN] Render seluruh elemen kartu untuk kartu pertama
+            // dan hanya tabel untuk kartu berikutnya
+            let elementToRender = cardElement;
+            if (i > 0) {
+                elementToRender = cardElement.querySelector('.preview-table');
+            }
+
+            const canvas = await html2canvas(elementToRender, {
               scale: 2,
               useCORS: true,
-              backgroundColor: "#fff",
+              backgroundColor: "#fff"
             });
 
             const imgData = canvas.toDataURL("image/png");
@@ -1098,21 +1231,66 @@
             const availableWidth = pageWidth - margin * 2;
             let imgWidth = availableWidth;
             let imgHeight = (imgProps.height * imgWidth) / imgProps.width;
-
+            
             const availableHeight = pageHeight - currentY - margin;
             if (imgHeight > availableHeight) {
-              imgHeight = availableHeight; // Kecilkan kartu jika terlalu tinggi
+                if(i > 0) { // Hanya tambah halaman jika bukan kartu pertama yang terlalu besar
+                  pdf.addPage();
+                  currentY = margin;
+                }
             }
 
-            const xPosition = margin;
-            pdf.addImage(imgData, "PNG", xPosition, currentY, imgWidth, imgHeight);
+            pdf.addImage(imgData, "PNG", margin, currentY, imgWidth, imgHeight);
+            lastCardBottomY = currentY + imgHeight;
           }
 
-          // Nama file otomatis
+          const signatureData = {
+              kotaTanggal: document.getElementById('signatureKotaTanggal').value,
+              kepsekName: document.getElementById('signatureKepsekName').value,
+              kepsekNip: document.getElementById('signatureKepsekNip').value,
+              penyusunName: document.getElementById('signaturePenyusunName').value,
+              penyusunNip: document.getElementById('signaturePenyusunNip').value,
+          };
+
+          const signatureBlockHeight = 40; 
+          const spaceNeeded = 10 + signatureBlockHeight;
+
+          if (lastCardBottomY + spaceNeeded > pageHeight - margin) {
+              pdf.addPage();
+              lastCardBottomY = 0;
+          }
+
+          let signatureY = lastCardBottomY + 15;
+          const signatureImageHeight = 15; 
+          pdf.setFontSize(11);
+
+          // Kolom Kiri (Kepala Sekolah)
+          pdf.text("Mengetahui,", margin, signatureY);
+          pdf.text("Kepala Sekolah", margin, signatureY + 5);
+          if(kepsekSigImage) {
+            const imgWidth = (kepsekSigImage.naturalWidth / kepsekSigImage.naturalHeight) * signatureImageHeight;
+            pdf.addImage(kepsekSigImage, 'PNG', margin, signatureY + 7, imgWidth, signatureImageHeight);
+          }
+          pdf.text(signatureData.kepsekName || ".........................................", margin, signatureY + 25);
+          pdf.text(`NIP. ${signatureData.kepsekNip || ".............................."}`, margin, signatureY + 30);
+          
+          // Kolom Kanan (Penyusun)
+          const rightColumnX = pageWidth / 2 + 10;
+          pdf.text(signatureData.kotaTanggal || "Sidoarjo, .........................", rightColumnX, signatureY - 5);
+          pdf.text("Penyusun", rightColumnX, signatureY);
+          if(penyusunSigImage) {
+            const imgWidth = (penyusunSigImage.naturalWidth / penyusunSigImage.naturalHeight) * signatureImageHeight;
+            pdf.addImage(penyusunSigImage, 'PNG', rightColumnX, signatureY + 2, imgWidth, signatureImageHeight);
+          }
+          pdf.text(signatureData.penyusunName || ".........................................", rightColumnX, signatureY + 25);
+          pdf.text(`NIP. ${signatureData.penyusunNip || ".............................."}`, rightColumnX, signatureY + 30);
+
+
           const mataPelajaran = document.getElementById("multiMataPelajaran").value || "Kartu-Soal";
           const kelas = document.getElementById("multiKelas").value || "";
           let fileName = `${mataPelajaran}-${kelas}-KartuSoal.pdf`.replace(/[/\\?%*:|"<>]/g, "-");
           pdf.save(fileName);
+
         } catch (error) {
           alert("Gagal membuat PDF. Pastikan file 'kop.png' ada di folder yang sama dan periksa konsol untuk detail.");
           console.error("Error exporting to PDF:", error);
@@ -1140,6 +1318,16 @@
           multiSatuanKerja: document.getElementById("multiSatuanKerja").value,
           multiKurikulum: document.getElementById("multiKurikulum").value,
           currentSoalIndex: currentSoalIndex,
+          headerTitle1: document.getElementById('headerTitle1').value,
+          headerTitle2: document.getElementById('headerTitle2').value,
+          signature: {
+              kotaTanggal: document.getElementById('signatureKotaTanggal').value,
+              kepsekName: document.getElementById('signatureKepsekName').value,
+              kepsekNip: document.getElementById('signatureKepsekNip').value,
+              penyusunNip: document.getElementById('signaturePenyusunNip').value,
+              kepsekSignature: document.getElementById('kepsekSignaturePreview').src,
+              penyusunSignature: document.getElementById('penyusunSignaturePreview').src
+          }
         };
         localStorage.setItem("kartuSoalData", JSON.stringify(dataToSave));
       }
@@ -1155,20 +1343,39 @@
           document.getElementById("multiSatuanKerja").value = data.multiSatuanKerja || "";
           document.getElementById("multiKurikulum").value = data.multiKurikulum || "";
           currentSoalIndex = data.currentSoalIndex || 0;
+          
+          document.getElementById('headerTitle1').value = data.headerTitle1 || "ASESMEN SUMATIF TENGAH SEMESTER I";
+          document.getElementById('headerTitle2').value = data.headerTitle2 || "TAHUN PELAJARAN 2025/2026";
+          
+          if (data.signature) {
+              document.getElementById('signatureKotaTanggal').value = data.signature.kotaTanggal || '';
+              document.getElementById('signatureKepsekName').value = data.signature.kepsekName || '';
+              document.getElementById('signatureKepsekNip').value = data.signature.kepsekNip || '';
+              document.getElementById('signaturePenyusunNip').value = data.signature.penyusunNip || '';
+              document.getElementById('kepsekSignaturePreview').src = data.signature.kepsekSignature || '';
+              document.getElementById('penyusunSignaturePreview').src = data.signature.penyusunSignature || '';
+          }
+
           if (multiSoalData.length === 0) {
             addNewSoal();
           }
           updateSoalTabs();
           loadCurrentSoal();
           updateNavigation();
+          document.getElementById('signaturePenyusunName').value = data.multiPenulis || '';
         } else {
           if (multiSoalData.length === 0) {
             addNewSoal();
           }
         }
       }
+      
+      function syncPenyusunName() {
+          const penulisName = document.getElementById('multiPenulis').value;
+          document.getElementById('signaturePenyusunName').value = penulisName;
+      }
 
-      document.addEventListener("DOMContentLoaded", function () {
+      document.addEventListener("DOMContentLoaded", function() {
         loadAllDataFromLocalStorage();
         let saveTimeout;
         document.querySelector(".form-container").addEventListener("input", () => {
@@ -1176,7 +1383,13 @@
           saveTimeout = setTimeout(saveAllDataToLocalStorage, 500);
         });
         document.querySelector(".form-container").addEventListener("change", saveAllDataToLocalStorage);
+        
+        document.getElementById('imageUploader').addEventListener('change', handleImageUpload);
+        document.getElementById('signatureUploader').addEventListener('change', handleSignatureUpload);
+        
+        document.getElementById('multiPenulis').addEventListener('input', syncPenyusunName);
       });
     </script>
   </body>
 </html>
+
